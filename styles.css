@@ -1,0 +1,287 @@
+/* ------------------------------------------------------------------
+   Web PM portal
+   The container is deliberately near-neutral: 38 partner brand colours
+   get injected at runtime, so the identity has to live in structure and
+   type. Brand colour appears only where it means something — the primary
+   action and the status stamp.
+------------------------------------------------------------------- */
+
+:root {
+  --brand: #1f2937;          /* replaced per partner at runtime */
+  --ink: #16191b;
+  --slate: #5b6268;
+  --mute: #8b9198;
+  --edge: #e3e5e2;
+  --rule: #eceeea;
+  --paper: #f7f8f6;
+  --card: #ffffff;
+  --warn: #9a3412;
+  --ok: #14663f;
+
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --r: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--brand); }
+
+/* ---------- layout ---------- */
+
+.shell { min-height: 100%; display: flex; flex-direction: column; }
+
+.topbar {
+  border-bottom: 1px solid var(--edge);
+  background: var(--card);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.topbar .logo { max-height: 30px; max-width: 170px; display: block; }
+.topbar .wordmark { font-weight: 600; font-size: 16px; color: var(--brand); letter-spacing: -0.01em; }
+.topbar .spacer { flex: 1; }
+
+.wrap { width: 100%; max-width: 660px; margin: 0 auto; padding: 28px 20px 64px; }
+.wrap.wide { max-width: 880px; }
+
+/* ---------- type ---------- */
+
+h1 { font-size: 25px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; margin: 0 0 6px; }
+h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 12px; }
+p  { margin: 0 0 14px; }
+
+.lede { color: var(--slate); margin: 0 0 26px; }
+
+/* Monospace eyebrow: used for anything the system generated rather than
+   a person wrote — references, timestamps, field labels on a ticket. */
+.eyebrow {
+  font: 500 11px/1 var(--mono);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.ref { font: 500 12px/1 var(--mono); color: var(--mute); letter-spacing: 0.02em; }
+
+.muted { color: var(--slate); font-size: 14px; }
+
+/* ---------- work order ticket ---------- */
+
+.ticket {
+  background: var(--card);
+  border: 1px solid var(--edge);
+  border-radius: var(--r);
+  margin-bottom: 12px;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+a.ticket:hover { border-color: var(--brand); }
+a.ticket:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+.ticket-head {
+  padding: 14px 16px 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ticket-head .title { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; margin: 0 0 3px; }
+
+/* The stamp: brand-inked, squared off, sitting slightly proud of the row.
+   This is the one place partner colour appears on a list. */
+.stamp {
+  flex: none;
+  font: 600 10px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 9px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.stamp.open      { color: var(--brand); }
+.stamp.done      { color: var(--ok); }
+.stamp.closed    { color: var(--mute); }
+.stamp.attention { color: var(--warn); }
+
+/* Ruled metadata rows, like the carbon copy of a service ticket */
+.rows { border-top: 1px solid var(--rule); }
+
+.row {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  gap: 12px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--rule);
+  font-size: 14px;
+}
+
+.row:last-child { border-bottom: 0; }
+.row dt { color: var(--mute); font: 500 11px/1.5 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; }
+.row dd { margin: 0; word-break: break-word; }
+
+@media (max-width: 460px) {
+  .row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ---------- forms ---------- */
+
+.field { margin-bottom: 18px; }
+
+label.lbl {
+  display: block;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.hint { display: block; color: var(--mute); font-size: 13px; font-weight: 400; margin-top: 2px; }
+
+input[type="text"], input[type="email"], input[type="url"], input[type="password"],
+input[type="date"], textarea, select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+input[type="file"] { font-size: 14px; width: 100%; }
+
+/* Request type chooser: ruled list, not a grid of cards */
+.types { border: 1px solid var(--edge); border-radius: var(--r); overflow: hidden; background: var(--card); }
+
+.type-group { border-bottom: 1px solid var(--edge); }
+.type-group:last-child { border-bottom: 0; }
+
+.type-group > .eyebrow { display: block; padding: 10px 16px 6px; background: var(--paper); }
+
+.type {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 13px 16px;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: var(--card);
+  font: inherit;
+  cursor: pointer;
+}
+
+.type:hover { background: var(--paper); }
+.type:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+.type strong { display: block; font-weight: 500; font-size: 15px; }
+.type span { display: block; color: var(--mute); font-size: 13px; margin-top: 1px; }
+
+/* ---------- buttons ---------- */
+
+.btn {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font: inherit;
+  font-weight: 500;
+  font-size: 15px;
+  cursor: pointer;
+  background: var(--brand);
+  color: #fff;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn:hover { filter: brightness(0.92); }
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.btn[disabled] { opacity: 0.5; cursor: default; filter: none; }
+
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--edge); }
+.btn.ghost:hover { background: var(--card); filter: none; border-color: var(--slate); }
+.btn.small { padding: 8px 14px; font-size: 14px; }
+
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 22px; }
+
+/* ---------- states ---------- */
+
+.notice {
+  border: 1px solid var(--edge);
+  border-left: 3px solid var(--brand);
+  background: var(--card);
+  border-radius: 6px;
+  padding: 12px 14px;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.notice.bad { border-left-color: var(--warn); color: var(--warn); }
+.notice.good { border-left-color: var(--ok); color: var(--ok); }
+
+.empty {
+  border: 1px dashed var(--edge);
+  border-radius: var(--r);
+  padding: 34px 22px;
+  text-align: center;
+  color: var(--slate);
+  background: var(--card);
+}
+
+.empty p { margin: 0 0 16px; }
+
+.loading { color: var(--mute); font: 500 13px/1 var(--mono); padding: 34px 0; text-align: center; }
+
+.back {
+  display: inline-block;
+  font: 500 12px/1 var(--mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mute);
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+
+.back:hover { color: var(--ink); }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 30px 0 12px;
+}
+
+.linkbtn {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; font-size: 14px; color: var(--slate); text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
