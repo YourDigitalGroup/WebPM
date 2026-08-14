@@ -1,42 +1,23 @@
-# Copied verbatim into dist/ by the build, so the deployed web root always
-# carries it. Apache 2.4 / cPanel.
-
-# Nothing here is browsable. Without this an unmatched URL under a real
-# directory (/assets, /logos) would list its contents.
-Options -Indexes
-
+# Single-page app: serve index.html for any path the file system doesn't have.
+# Without this, /cf and /cf/8f3a-... return 404 instead of loading the portal.
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-
-  # The app is a single page: React Router owns /cf, /team/12, /acme/new and
-  # everything else. Apache only serves a path that exists on disk; the rest
-  # falls through to index.html so a refresh or a pasted link still works.
+  RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule . /index.html [L]
 </IfModule>
 
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css text/plain \
-    application/javascript application/json image/svg+xml
-</IfModule>
+# No directory browsing
+Options -Indexes
 
+# Long cache for fingerprinted assets, none for the shell
 <IfModule mod_headers.c>
-  # Vite fingerprints every file in assets/, so those names change whenever
-  # their contents do and can be held forever.
-  <FilesMatch "\.(js|css|woff2?|svg|png|jpg|jpeg|gif|webp|ico)$">
+  <FilesMatch "\.(js|css|woff2|png|svg)$">
     Header set Cache-Control "public, max-age=31536000, immutable"
   </FilesMatch>
-
-  # index.html is the one unfingerprinted file: it names the current build's
-  # assets, so a cached copy would keep pointing at the previous deploy.
-  <FilesMatch "^index\.html$">
-    Header set Cache-Control "no-cache, must-revalidate"
+  <FilesMatch "index\.html$">
+    Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>
-
-# Dotfiles are configuration, not content.
-<FilesMatch "^\.">
-  Require all denied
-</FilesMatch>
