@@ -3,6 +3,11 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import DynamicForm from "../components/DynamicForm.jsx";
 
+// The fallback path. Pointing at the thing on the live site is better, so this
+// is for requests with no visual anchor — new hours, a new page, a quote.
+// Deliberately no "which page" field: a client who could answer that reliably
+// would have pointed at it instead.
+
 const GROUPS = [
   { key: "content", label: "Content and copy" },
   { key: "build",   label: "Fixes and changes" },
@@ -17,7 +22,6 @@ export default function NewRequest({ user }) {
   const [sites, setSites] = useState([]);
   const [chosen, setChosen] = useState(null);
   const [siteId, setSiteId] = useState("");
-  const [pageUrl, setPageUrl] = useState("");
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
   const [busy, setBusy] = useState(false);
@@ -27,7 +31,7 @@ export default function NewRequest({ user }) {
     let live = true;
     Promise.all([
       supabase.from("request_types")
-        .select("id, key, label, description, category, requires_markup, intake_schema")
+        .select("id, key, label, description, category, intake_schema")
         .eq("is_active", true).order("sort_order"),
       supabase.from("sites").select("id, name, url").eq("status", "active").order("name"),
     ]).then(([t, s]) => {
@@ -53,7 +57,6 @@ export default function NewRequest({ user }) {
         category: chosen.category,
         title: "pending",
         due_date: new Date().toISOString().slice(0, 10),
-        page_url: pageUrl || null,
         form_data: values,
       })
       .select("id")
@@ -105,7 +108,10 @@ export default function NewRequest({ user }) {
       <>
         <Link className="back" to={`/${slug}`}>&larr; Back</Link>
         <h1>What do you need?</h1>
-        <p className="lede">Pick the closest match. We'll ask for the details next.</p>
+        <p className="lede">
+          If it's something you can see on your site, it's quicker to open the site
+          and point at it. Otherwise, pick the closest match below.
+        </p>
 
         <div className="types">
           {GROUPS.map((g) => {
@@ -147,20 +153,6 @@ export default function NewRequest({ user }) {
             </select>
           </div>
         )}
-
-        <div className="field">
-          <label className="lbl" htmlFor="page">
-            Which page?
-            <span className="hint">Paste the web address of the page, if you know it</span>
-          </label>
-          <input
-            id="page"
-            type="url"
-            placeholder="https://"
-            value={pageUrl}
-            onChange={(e) => setPageUrl(e.target.value)}
-          />
-        </div>
 
         <DynamicForm
           schema={chosen.intake_schema}
