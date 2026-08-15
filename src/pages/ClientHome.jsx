@@ -8,7 +8,8 @@ const OPEN = ["pending", "completed", "awaiting_confirmation", "needs_info"];
 export default function ClientHome({ profile }) {
   const { slug } = useParams();
   const [requests, setRequests] = useState(null);
-  const [siteCount, setSiteCount] = useState(0);
+  const [sites, setSites] = useState([]);
+  const [picked, setPicked] = useState("");
 
   useEffect(() => {
     let live = true;
@@ -19,11 +20,12 @@ export default function ClientHome({ profile }) {
         .select("id, status, page_url, created_at, request_types(label), sites(name)")
         .order("created_at", { ascending: false })
         .limit(60),
-      supabase.from("sites").select("id", { count: "exact", head: true }).eq("status", "active"),
+      supabase.from("sites").select("id, name, url").eq("status", "active").order("name"),
     ]).then(([r, s]) => {
       if (!live) return;
       setRequests(r.data ?? []);
-      setSiteCount(s.count ?? 0);
+      setSites(s.data ?? []);
+      if ((s.data ?? []).length) setPicked(s.data[0].url);
     });
 
     return () => { live = false; };
@@ -35,22 +37,56 @@ export default function ClientHome({ profile }) {
 
   return (
     <>
-      <h1>{first ? `Hello, ${first}` : "Your website requests"}</h1>
+      <h1>{first ? `Hello, ${first}` : "Your website"}</h1>
       <p className="lede">
-        Ask for a change to your site and we'll take it from here.
+        The easiest way to ask for a change is to open your site and point at it.
       </p>
 
-      <Link className="btn" to={`/${slug}/new`}>Request a change</Link>
+      {/* Primary path: open their own site, where the feedback tab lives.
+          Pointing at the thing beats describing where it is.
+          One site gets a plain button; several get a picker, since one
+          customer already has six and a stack of buttons doesn't scale. */}
+      {sites.length === 1 && (
+        <a className="btn" href={sites[0].url} target="_blank" rel="noreferrer">
+          Open my site
+        </a>
+      )}
+
+      {sites.length > 1 && (
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <select
+            aria-label="Choose a site"
+            value={picked}
+            onChange={(e) => setPicked(e.target.value)}
+            style={{ maxWidth: 320 }}
+          >
+            {sites.map((s) => <option key={s.id} value={s.url}>{s.name}</option>)}
+          </select>
+          <a className="btn" href={picked} target="_blank" rel="noreferrer">Open site</a>
+        </div>
+      )}
+
+      {sites.length > 0 && (
+        <p className="muted" style={{ marginTop: 14 }}>
+          Your site opens in a new tab. Click the tab on the edge of the screen,
+          then click whatever you'd like changed and tell us what to do.
+        </p>
+      )}
+
+      {/* Fallback for things with nothing to point at */}
+      <p style={{ marginTop: 18 }}>
+        <Link className="linkbtn" to={`/${slug}/new`}>
+          Nothing to point at? Send us a note instead
+        </Link>
+      </p>
 
       {requests === null && <p className="loading">Loading…</p>}
 
-      {requests !== null && requests.length === 0 && (
+      {requests !== null && requests.length === 0 && sites.length === 0 && (
         <div className="empty" style={{ marginTop: 26 }}>
-          <p>No requests yet.</p>
+          <p>No site is connected to your account yet.</p>
           <p className="muted" style={{ margin: 0 }}>
-            {siteCount === 0
-              ? "Once your site is connected you'll be able to request changes here."
-              : "When you need something changed, start above."}
+            Your account manager can sort that out.
           </p>
         </div>
       )}
