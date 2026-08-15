@@ -6,6 +6,12 @@ on:
       - main
   workflow_dispatch:
 
+# Only one deploy at a time. Several commits in quick succession would
+# otherwise open concurrent FTP connections, which most servers refuse.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,10 +32,11 @@ jobs:
       # Only ./dist goes to the server. Source, package.json and node_modules
       # stay in the repo where they belong, rather than being publicly readable.
       - name: Deploy to FTP
-        uses: SamKirkland/FTP-Deploy-Action@4.3.2
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           local-dir: ./dist/
+          timeout: 120000
