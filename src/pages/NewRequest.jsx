@@ -1,27 +1,24 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase.js";
 import DynamicForm from "../components/DynamicForm.jsx";
 
-// The fallback path. Pointing at the thing on the live site is better, so this
-// is for requests with no visual anchor — new hours, a new page, a quote.
-// Deliberately no "which page" field: a client who could answer that reliably
-// would have pointed at it instead.
-
-const GROUPS = [
-  { key: "content", label: "Content and copy" },
-  { key: "build",   label: "Fixes and changes" },
-  { key: "scope",   label: "Something new" },
-];
+// Step two. The type is picked on the landing page and arrives as ?type=,
+// so this page only asks for the details that type defines.
+// Deliberately no "which page" field: a client who could answer that
+// reliably would have pointed at it on the site instead.
 
 export default function NewRequest({ user }) {
   const { slug } = useParams();
+  const [params] = useSearchParams();
   const navigate = useNavigate();
 
-  const [types, setTypes] = useState(null);
+  const typeKey = params.get("type");
+  const siteParam = params.get("site");
+
+  const [type, setType] = useState(undefined);
   const [sites, setSites] = useState([]);
-  const [chosen, setChosen] = useState(null);
-  const [siteId, setSiteId] = useState("");
+  const [siteId, setSiteId] = useState(siteParam ?? "");
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
   const [busy, setBusy] = useState(false);
@@ -29,19 +26,21 @@ export default function NewRequest({ user }) {
 
   useEffect(() => {
     let live = true;
+
     Promise.all([
       supabase.from("request_types")
         .select("id, key, label, description, category, intake_schema")
-        .eq("is_active", true).order("sort_order"),
+        .eq("key", typeKey ?? "").maybeSingle(),
       supabase.from("sites").select("id, name, url").eq("status", "active").order("name"),
     ]).then(([t, s]) => {
       if (!live) return;
-      setTypes(t.data ?? []);
+      setType(t.data ?? null);
       setSites(s.data ?? []);
-      if ((s.data ?? []).length === 1) setSiteId(s.data[0].id);
+      if (!siteParam && (s.data ?? []).length === 1) setSiteId(s.data[0].id);
     });
+
     return () => { live = false; };
-  }, []);
+  }, [typeKey, siteParam]);
 
   async function submit(e) {
     e.preventDefault();
@@ -52,9 +51,9 @@ export default function NewRequest({ user }) {
       .from("requests")
       .insert({
         site_id: siteId,
-        request_type_id: chosen.id,
+        request_type_id: type.id,
         submitted_by: user.id,
-        category: chosen.category,
+        category: type.category,
         title: "pending",
         due_date: new Date().toISOString().slice(0, 10),
         form_data: values,
@@ -88,58 +87,25 @@ export default function NewRequest({ user }) {
     navigate(`/${slug}/${created.id}?new=1`);
   }
 
-  if (types === null) return <p className="loading">Loading…</p>;
+  if (type === undefined) return <p className="loading">Loading…</p>;
 
-  if (sites.length === 0) {
+  if (type === null) {
     return (
       <>
         <Link className="back" to={`/${slug}`}>&larr; Back</Link>
         <div className="empty">
-          <p>No site is connected to your account yet.</p>
-          <p className="muted" style={{ margin: 0 }}>Your account manager can sort that out.</p>
+          <p>We couldn't find that kind of request.</p>
+          <Link className="btn ghost small" to={`/${slug}`}>Start again</Link>
         </div>
       </>
     );
   }
 
-  // Step one: what kind of change?
-  if (!chosen) {
-    return (
-      <>
-        <Link className="back" to={`/${slug}`}>&larr; Back</Link>
-        <h1>What do you need?</h1>
-        <p className="lede">
-          If it's something you can see on your site, it's quicker to open the site
-          and point at it. Otherwise, pick the closest match below.
-        </p>
-
-        <div className="types">
-          {GROUPS.map((g) => {
-            const inGroup = types.filter((t) => t.category === g.key);
-            if (inGroup.length === 0) return null;
-            return (
-              <div className="type-group" key={g.key}>
-                <span className="eyebrow">{g.label}</span>
-                {inGroup.map((t) => (
-                  <button className="type" key={t.id} onClick={() => setChosen(t)}>
-                    <strong>{t.label}</strong>
-                    {t.description && <span>{t.description}</span>}
-                  </button>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      </>
-    );
-  }
-
-  // Step two: the details that type asks for
   return (
     <>
-      <button className="back" onClick={() => setChosen(null)}>&larr; Choose something else</button>
-      <h1>{chosen.label}</h1>
-      {chosen.description && <p className="lede">{chosen.description}</p>}
+      <Link className="back" to={`/${slug}`}>&larr; Choose something else</Link>
+      <h1>{type.label}</h1>
+      {type.description && <p className="lede">{type.description}</p>}
 
       {error && <div className="notice bad">{error}</div>}
 
@@ -155,7 +121,7 @@ export default function NewRequest({ user }) {
         )}
 
         <DynamicForm
-          schema={chosen.intake_schema}
+          schema={type.intake_schema}
           values={values}
           files={files}
           onChange={(k, v) => setValues((p) => ({ ...p, [k]: v }))}
