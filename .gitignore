@@ -2,3 +2,7 @@ node_modules/
 dist/
 .env.local
 .DS_Store
+
+# Build output. These are generated into dist/ by `npm run build`; committing a
+# copy here is what previously overwrote the source index.html.
+/assets/

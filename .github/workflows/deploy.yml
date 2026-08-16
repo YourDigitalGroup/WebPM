@@ -23,6 +23,29 @@ jobs:
           node-version: 20
           cache: npm
 
+      # A built copy of index.html uploaded over the source one is invisible in
+      # review and does not fail immediately: it keeps working for as long as a
+      # matching assets/ folder happens to be committed alongside it, silently
+      # shipping that stale bundle instead of the current source. It only breaks
+      # later, when those files are tidied away, and the error then points at a
+      # missing bundle rather than at the swap that caused it. Catching it here
+      # costs a second and names the actual problem.
+      - name: Check index.html is source, not build output
+        run: |
+          if ! grep -q '/src/main.jsx' index.html; then
+            echo "::error file=index.html::index.html is missing its <script src=\"/src/main.jsx\"> tag"
+            echo "index.html looks like build output rather than source."
+            echo "It is probably a copy of dist/index.html uploaded over the real file."
+            echo "Fix: restore the /src/main.jsx script tag. Never commit files from dist/."
+            exit 1
+          fi
+          if grep -qE '<(script|link)[^>]*(src|href)="/assets/' index.html; then
+            echo "::error file=index.html::index.html references /assets/ directly"
+            echo "Those hashed filenames are produced by the build and belong only in dist/."
+            echo "Hard-coding one pins the site to a single build and breaks the next one."
+            exit 1
+          fi
+
       - name: Install dependencies
         run: npm ci
 
