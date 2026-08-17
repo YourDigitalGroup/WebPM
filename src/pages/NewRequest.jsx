@@ -3,10 +3,11 @@ import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom"
 import { supabase } from "../lib/supabase.js";
 import DynamicForm from "../components/DynamicForm.jsx";
 
-// Step two. The type is picked on the landing page and arrives as ?type=,
-// so this page only asks for the details that type defines.
-// Deliberately no "which page" field: a client who could answer that
-// reliably would have pointed at it on the site instead.
+// Step two. The type is picked on the landing page and arrives as ?type=.
+//
+// "Which page" is a list of their actual pages, read from the site at
+// onboarding. Asking a client to paste a URL was the wrong question — most
+// don't know it, and the ones who guess get it wrong.
 
 export default function NewRequest({ user }) {
   const { slug } = useParams();
@@ -19,6 +20,8 @@ export default function NewRequest({ user }) {
   const [type, setType] = useState(undefined);
   const [sites, setSites] = useState([]);
   const [siteId, setSiteId] = useState(siteParam ?? "");
+  const [pages, setPages] = useState([]);
+  const [pageId, setPageId] = useState("");
   const [values, setValues] = useState({});
   const [files, setFiles] = useState({});
   const [busy, setBusy] = useState(false);
@@ -42,10 +45,26 @@ export default function NewRequest({ user }) {
     return () => { live = false; };
   }, [typeKey, siteParam]);
 
+  // Pages depend on which site is selected
+  useEffect(() => {
+    let live = true;
+    if (!siteId) { setPages([]); return; }
+
+    supabase.from("site_pages")
+      .select("id, title, url")
+      .eq("site_id", siteId).eq("is_active", true)
+      .order("sort_order")
+      .then(({ data }) => { if (live) setPages(data ?? []); });
+
+    return () => { live = false; };
+  }, [siteId]);
+
   async function submit(e) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    const page = pages.find((p) => p.id === pageId);
 
     const { data: created, error: insertError } = await supabase
       .from("requests")
@@ -56,6 +75,8 @@ export default function NewRequest({ user }) {
         category: type.category,
         title: "pending",
         due_date: new Date().toISOString().slice(0, 10),
+        site_page_id: pageId || null,
+        page_url: page?.url ?? null,
         form_data: values,
       })
       .select("id")
@@ -101,6 +122,8 @@ export default function NewRequest({ user }) {
     );
   }
 
+  const selectedPage = pages.find((p) => p.id === pageId);
+
   return (
     <>
       <Link className="back" to={`/${slug}`}>&larr; Choose something else</Link>
@@ -113,10 +136,31 @@ export default function NewRequest({ user }) {
         {sites.length > 1 && (
           <div className="field">
             <label className="lbl" htmlFor="site">Which site?</label>
-            <select id="site" required value={siteId} onChange={(e) => setSiteId(e.target.value)}>
+            <select id="site" required value={siteId}
+                    onChange={(e) => { setSiteId(e.target.value); setPageId(""); }}>
               <option value="">Choose one</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
+          </div>
+        )}
+
+        {pages.length > 0 && (
+          <div className="field">
+            <label className="lbl" htmlFor="page">
+              Which page?
+              <span className="hint">Not sure? Leave it and we'll work it out</span>
+            </label>
+            <select id="page" value={pageId} onChange={(e) => setPageId(e.target.value)}>
+              <option value="">Choose a page</option>
+              {pages.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+            {selectedPage && (
+              <p className="muted" style={{ marginTop: 6 }}>
+                <a href={selectedPage.url} target="_blank" rel="noreferrer">
+                  Open that page &rarr;
+                </a>
+              </p>
+            )}
           </div>
         )}
 
