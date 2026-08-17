@@ -48,6 +48,12 @@ export default function TeamQueue({ user, profile, role }) {
           : `${mine.length} ${mine.length === 1 ? "request" : "requests"} to work through.`}
       </p>
 
+      {oversight && (
+        <div className="btn-row" style={{ marginTop: 0, marginBottom: 24 }}>
+          <Link className="btn ghost small" to="/team/new-client">Add a client</Link>
+        </div>
+      )}
+
       {mine === null && <p className="loading">Loading…</p>}
 
       {mine?.length === 0 && (
