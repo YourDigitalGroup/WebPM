@@ -7,11 +7,13 @@ import ClientHome from "./pages/ClientHome.jsx";
 import NewRequest from "./pages/NewRequest.jsx";
 import RequestDetail from "./pages/RequestDetail.jsx";
 import TeamQueue from "./pages/TeamQueue.jsx";
+import Onboard from "./pages/Onboard.jsx";
 
 export default function App() {
   return (
     <Routes>
       <Route path="/team"      element={<TeamArea />} />
+      <Route path="/team/new-client" element={<TeamArea onboard />} />
       <Route path="/team/:id"  element={<TeamArea detail />} />
       <Route path="/:slug"     element={<PartnerArea page="home" />} />
       <Route path="/:slug/new" element={<PartnerArea page="new" />} />
@@ -45,7 +47,7 @@ function PartnerArea({ page }) {
 }
 
 /* The team's own area: no partner branding, since nobody here is a client. */
-function TeamArea({ detail }) {
+function TeamArea({ detail, onboard }) {
   const brand = useBrand(null);
   const { loading, user, profile, role } = useSession();
 
@@ -62,8 +64,8 @@ function TeamArea({ detail }) {
 
   return (
     <Shell brand={brand} user={user} wide>
-      {detail
-        ? <RequestDetail user={user} role={role} />
+      {onboard ? <Onboard />
+        : detail ? <RequestDetail user={user} role={role} />
         : <TeamQueue user={user} profile={profile} role={role} />}
     </Shell>
   );
