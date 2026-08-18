@@ -50,6 +50,8 @@ export default function TeamQueue({ user, profile, role }) {
 
       {oversight && (
         <div className="btn-row" style={{ marginTop: 0, marginBottom: 24 }}>
+          <Link className="btn ghost small" to="/team/all">All requests</Link>
+          <Link className="btn ghost small" to="/team/clients">Clients</Link>
           <Link className="btn ghost small" to="/team/new-client">Add a client</Link>
         </div>
       )}
@@ -62,7 +64,7 @@ export default function TeamQueue({ user, profile, role }) {
 
       {mine?.map((r) => <Row key={r.id} request={r} today={today} />)}
 
-      {(oversight || others.length > 0) && (
+      {!oversight && others.length > 0 && (
         <>
           <div className="section-head">
             <h2 style={{ margin: 0 }}>Everything else</h2>

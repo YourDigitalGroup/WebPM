@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase.js";
 
 export default function Onboard() {
   const [partners, setPartners] = useState([]);
+  const [specialists, setSpecialists] = useState([]);
   const [form, setForm] = useState({
     partner_slug: "",
     advertiser_name: "",
@@ -17,6 +18,7 @@ export default function Onboard() {
     contact_name: "",
     contact_email: "",
     ae_handles: "",
+    content_specialist: "",
     admin_url: "",
     notes: "",
   });
@@ -27,6 +29,8 @@ export default function Onboard() {
 
   useEffect(() => {
     supabase.rpc("partners_for_onboarding").then(({ data }) => setPartners(data ?? []));
+    supabase.rpc("assignable_people").then(({ data }) =>
+      setSpecialists((data ?? []).filter((p) => p.role === "content_specialist")));
   }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -51,6 +55,7 @@ export default function Onboard() {
       p_ae_handles: handles,
       p_admin_url: form.admin_url.trim() || null,
       p_notes: form.notes.trim() || null,
+      p_content_specialist: form.content_specialist || null,
     });
 
     if (rpcError) {
@@ -119,6 +124,7 @@ export default function Onboard() {
           <button className="btn" onClick={() => { setDone(null); setForm((f) => ({
             ...f, advertiser_name: "", site_name: "", site_url: "",
             contact_name: "", contact_email: "", admin_url: "", notes: "",
+            content_specialist: "",
           })); }}>
             Add another
           </button>
@@ -168,6 +174,17 @@ export default function Onboard() {
           <select id="platform" required value={form.platform} onChange={set("platform")}>
             <option value="wordpress">WordPress</option>
             <option value="fourge">FOURGE</option>
+          </select>
+        </div>
+
+        <div className="field">
+          <label className="lbl" htmlFor="cs">
+            Content specialist
+            <span className="hint">Leave as the group's default unless this client needs someone else</span>
+          </label>
+          <select id="cs" value={form.content_specialist} onChange={set("content_specialist")}>
+            <option value="">Whoever owns the group</option>
+            {specialists.map((p) => <option key={p.id} value={p.id}>{p.full_name}</option>)}
           </select>
         </div>
 
