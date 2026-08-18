@@ -32,7 +32,7 @@ export default function NewRequest({ user }) {
 
     Promise.all([
       supabase.from("request_types")
-        .select("id, key, label, description, category, intake_schema")
+        .select("id, key, label, description, category, intake_schema, needs_page")
         .eq("key", typeKey ?? "").maybeSingle(),
       supabase.from("sites").select("id, name, url").eq("status", "active").order("name"),
     ]).then(([t, s]) => {
@@ -144,7 +144,7 @@ export default function NewRequest({ user }) {
           </div>
         )}
 
-        {pages.length > 0 && (
+        {type.needs_page && pages.length > 0 && (
           <div className="field">
             <label className="lbl" htmlFor="page">
               Which page?

@@ -51,7 +51,6 @@ export default function ClientHome({ profile }) {
   const first = profile?.full_name?.split(" ")[0];
   const open = requests.filter((r) => OPEN.includes(r.status));
   const past = requests.filter((r) => !OPEN.includes(r.status));
-  const chosenSite = sites.find((s) => s.id === siteId) ?? sites[0];
 
   function start(type) {
     const q = new URLSearchParams({ type: type.key });
@@ -104,20 +103,6 @@ export default function ClientHome({ profile }) {
           </section>
         );
       })}
-
-      {/* Offered, not imposed: better for anything visual, useless for hours */}
-      {chosenSite && (
-        <div className="pin-prompt">
-          <h2>Easier to show us?</h2>
-          <p>
-            Open your site and click whatever you'd like changed. Handy when it's
-            hard to describe, or you're not sure what something is called.
-          </p>
-          <a className="btn ghost small" href={chosenSite.url} target="_blank" rel="noreferrer">
-            Open {sites.length > 1 ? chosenSite.name : "my site"} &rarr;
-          </a>
-        </div>
-      )}
 
       {open.length > 0 && (
         <>
