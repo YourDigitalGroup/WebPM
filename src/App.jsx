@@ -10,6 +10,7 @@ import TeamQueue from "./pages/TeamQueue.jsx";
 import Onboard from "./pages/Onboard.jsx";
 import ManageQueue from "./pages/ManageQueue.jsx";
 import Clients from "./pages/Clients.jsx";
+import Account from "./pages/Account.jsx";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
       <Route path="/team/new-client" element={<TeamArea onboard />} />
       <Route path="/team/all"        element={<TeamArea manage />} />
       <Route path="/team/clients"    element={<TeamArea clients />} />
+      <Route path="/team/account"    element={<TeamArea account />} />
       <Route path="/team/:id"  element={<TeamArea detail />} />
       <Route path="/:slug"     element={<PartnerArea page="home" />} />
       <Route path="/:slug/new" element={<PartnerArea page="new" />} />
@@ -51,7 +53,7 @@ function PartnerArea({ page }) {
 }
 
 /* The team's own area: no partner branding, since nobody here is a client. */
-function TeamArea({ detail, onboard, manage, clients }) {
+function TeamArea({ detail, onboard, manage, clients, account }) {
   const brand = useBrand(null);
   const { loading, user, profile, role } = useSession();
 
@@ -67,8 +69,9 @@ function TeamArea({ detail, onboard, manage, clients }) {
   }
 
   return (
-    <Shell brand={brand} user={user} wide>
-      {onboard ? <Onboard />
+    <Shell brand={brand} user={user} wide team>
+      {account ? <Account profile={profile} role={role} />
+        : onboard ? <Onboard />
         : clients ? <Clients />
         : manage ? <ManageQueue />
         : detail ? <RequestDetail user={user} role={role} />
